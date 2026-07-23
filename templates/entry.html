@@ -1,0 +1,57 @@
+{{define "content"}}
+<div class="entry-margin-number">{{pad3 .Entry.Number}}</div>
+<span class="category-tag">{{.Entry.CategoryName}}</span>{{if .Entry.IsPrivate}} <span class="private-flag">Prive</span>{{end}}
+<h1 style="margin-top:0.5rem;">{{.Entry.Title}}</h1>
+<p class="hint">{{dateFR .Entry.CreatedAt}}</p>
+
+{{if .Cover}}
+<img class="entry-cover" src="/static/{{.Cover.Filepath}}" alt="{{.Entry.Title}}">
+{{end}}
+
+{{if .Recipe}}
+<div class="recipe-meta">
+  <span>Portions : {{.Recipe.Servings}}</span>
+  <span>Preparation : {{.Recipe.PrepMinutes}} min</span>
+  <span>Cuisson : {{.Recipe.CookMinutes}} min</span>
+</div>
+<div class="recipe-columns">
+  <div>
+    <h3>Ingredients</h3>
+    <ul class="ingredients-list">
+      {{range .Recipe.Ingredients}}
+      <li><span>{{.Item}}</span><span class="amount mono">{{.Amount}}</span></li>
+      {{end}}
+    </ul>
+  </div>
+  <div>
+    <h3>Preparation</h3>
+    <ol class="steps-list">
+      {{range .Recipe.Steps}}
+      <li>{{.}}</li>
+      {{end}}
+    </ol>
+  </div>
+</div>
+{{end}}
+
+<div class="entry-content">
+  {{safeHTML .ContentHTML}}
+</div>
+
+{{if .Gallery}}
+<h3>Galerie</h3>
+<div class="gallery">
+  {{range .Gallery}}
+    {{if eq .Kind "video"}}
+    <video src="/static/{{.Filepath}}" controls></video>
+    {{else}}
+    <img src="/static/{{.Filepath}}" alt="{{.Filename}}">
+    {{end}}
+  {{end}}
+</div>
+{{end}}
+
+<p class="hint" style="margin-top:2rem;border-top:1px solid var(--line);padding-top:1rem;">
+  <a href="/entree/{{.Entry.Slug}}/historique">Voir l'historique des versions</a>
+</p>
+{{end}}

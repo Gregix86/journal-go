@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{if .Title}}{{.Title}} — {{end}}{{.SiteName}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/">{{.SiteName}}</a>
+      <div class="eyebrow">Sujets</div>
+      <nav>
+        {{range .Categories}}
+        <a href="/categorie/{{.Slug}}" class="{{if eq $.ActiveCategory .Slug}}active{{end}}">{{.Name}}</a>
+        {{end}}
+      </nav>
+      <div class="admin-link">
+        {{if .Authenticated}}
+          <a href="/admin">Admin</a>
+        {{else}}
+          <a href="/admin/login">Connexion</a>
+        {{end}}
+      </div>
+    </aside>
+    <main class="content{{if .Wide}} content-wide{{end}}">
+      {{template "content" .}}
+    </main>
+  </div>
+</body>
+</html>

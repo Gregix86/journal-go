@@ -1,0 +1,38 @@
+# Compose de PRODUCTION - utilise par le runner CI/CD pour le deploiement.
+# Difference avec docker-compose.yml : "image: ..." au lieu de "build: .".
+# Remplace <TON-COMPTE-GITHUB>/<TON-DEPOT> par les bonnes valeurs.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: journal
+      POSTGRES_PASSWORD: journal
+      POSTGRES_DB: journal
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U journal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ghcr.io/<TON-COMPTE-GITHUB>/<TON-DEPOT>:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://journal:journal@db:5432/journal?sslmode=disable
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads:/app/static/uploads
+
+volumes:
+  pgdata:
+  uploads:

@@ -1,0 +1,17 @@
+{{define "content"}}
+<h1>Connexion</h1>
+<div class="admin-card" style="max-width:380px;">
+  {{if .Error}}<div class="error-box">{{.Error}}</div>{{end}}
+  <form method="post" action="/admin/login">
+    <div class="field">
+      <label>Identifiant</label>
+      <input type="text" name="username" required autofocus>
+    </div>
+    <div class="field">
+      <label>Mot de passe</label>
+      <input type="password" name="password" required>
+    </div>
+    <button type="submit">Se connecter</button>
+  </form>
+</div>
+{{end}}

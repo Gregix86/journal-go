@@ -1,0 +1,26 @@
+{{define "content"}}
+<p class="hint"><a href="/admin">← Retour au tableau de bord</a></p>
+<h1>Historique — {{.EntryTitle}}</h1>
+
+<div class="admin-card">
+  {{range .Versions}}
+  <div class="admin-row">
+    <div class="admin-row-main">
+      <span class="num mono">v{{.Number}}</span>
+      <div class="info">
+        <strong>{{if .Message}}{{.Message}}{{else}}(sans message){{end}}</strong>
+        <span class="hint">{{datetimeFR .CreatedAt}}</span>
+      </div>
+    </div>
+    <div class="admin-row-actions">
+      <a class="btn secondary" href="/admin/entries/{{$.EntryID}}/edit">Editer l'entree</a>
+      <form method="post" action="/admin/entries/{{$.EntryID}}/versions/{{.Number}}/restore" onsubmit="return confirm('Restaurer cette version ? Cela creera une nouvelle version basee sur celle-ci.');">
+        <button class="secondary" type="submit">Restaurer</button>
+      </form>
+    </div>
+  </div>
+  {{else}}
+  <p class="hint">Aucune version enregistree.</p>
+  {{end}}
+</div>
+{{end}}

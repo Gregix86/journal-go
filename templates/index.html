@@ -1,0 +1,18 @@
+{{define "content"}}
+<h1>Ce que je bidouille, ce que je cuisine</h1>
+<div class="ledger">
+  {{range .Entries}}
+  <a class="ledger-row" href="/entree/{{.Slug}}" style="color:inherit;text-decoration:none;">
+    <span class="ledger-num mono">{{pad3 .Number}}</span>
+    <span class="ledger-body">
+      <span class="category-tag">{{.CategoryName}}</span>{{if .IsPrivate}} <span class="private-flag">Prive</span>{{end}}
+      <h2>{{.Title}}</h2>
+      <p>{{.Excerpt}}</p>
+    </span>
+    <span class="ledger-meta">{{dateFR .CreatedAt}}</span>
+  </a>
+  {{else}}
+  <p class="hint">Pas encore d'entree. Connecte-toi a <a href="/admin">/admin</a> pour en ajouter une.</p>
+  {{end}}
+</div>
+{{end}}

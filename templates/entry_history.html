@@ -1,0 +1,18 @@
+{{define "content"}}
+<p class="hint"><a href="/entree/{{.EntrySlug}}">← Retour a l'article</a></p>
+<h1>Historique — {{.EntryTitle}}</h1>
+
+<div class="ledger">
+  {{range .Versions}}
+  <a class="ledger-row" href="/entree/{{$.EntrySlug}}/historique/{{.Number}}" style="color:inherit;text-decoration:none;">
+    <span class="ledger-num mono">v{{.Number}}</span>
+    <span class="ledger-body">
+      <h2 style="font-size:1rem;">{{if .Message}}{{.Message}}{{else}}(sans message){{end}}</h2>
+    </span>
+    <span class="ledger-meta">{{datetimeFR .CreatedAt}}</span>
+  </a>
+  {{else}}
+  <p class="hint">Aucune version enregistree.</p>
+  {{end}}
+</div>
+{{end}}
