@@ -19,7 +19,7 @@ services:
       retries: 5
 
   web:
-    image: ghcr.io/<TON-COMPTE-GITHUB>/<TON-DEPOT>:latest
+    image: ghcr.io/tonpseudo/journal-go:latest
     restart: unless-stopped
     depends_on:
       db:
