@@ -1,6 +1,6 @@
 module carnet
 
-go 1.24
+go 1.25
 
 replace golang.org/x/crypto => github.com/golang/crypto v0.31.0
 
