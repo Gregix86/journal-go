@@ -168,6 +168,36 @@ L'image Docker (build multi-etapes, binaire Go statique dans une image
   (mot de passe DB, `SECRET_KEY`)
 - Un `Ingress` pour le nom de domaine/HTTPS
 
+## Securite : couverture des scans
+
+Le pipeline (`ci-cd.yml`) couvre maintenant les principales categories :
+
+| Type | Outil | Ce qu'il verifie |
+|---|---|---|
+| **SCA** (dependances) | `govulncheck` + Dependabot | Vulnerabilites connues dans le code/bibliotheques Go |
+| **SAST** (code source) | `gosec` | Failles dans notre propre code (injections, crypto risquee, etc.) |
+| **Secrets scanning** | `gitleaks` | Mots de passe/cles oublies dans Git, y compris l'historique |
+| **IaC / config** | Trivy (`scan-type: config`) | Mauvaises pratiques dans `Dockerfile`/`docker-compose.yml` |
+| **Container scanning** | Trivy (image) | CVE dans l'image Docker finale (paquets systeme inclus) |
+| **DAST** | OWASP ZAP (baseline scan) | Attaque une instance jetable du site en conditions reelles (headers manquants, XSS basiques, etc.) — jamais contre la production directement |
+
+Chaque scan qui trouve une faille **critique ou majeure** fait echouer le job
+correspondant, ce qui **bloque le deploiement** (`deploy` attend que
+`build-and-push` ET `dast-scan` reussissent).
+
+Le scan quotidien (`security-scan.yml`) complete ça en re-verifiant l'image
+deja en production (nouvelles CVE decouvertes apres coup), les mises a jour
+systeme en attente sur le VPS, et les ports ouverts.
+
+**Limites encore presentes**, pour rester honnete sur la couverture reelle :
+- Le DAST (ZAP baseline) est un scan rapide et automatise — il ne remplace
+  pas un vrai test d'intrusion manuel, et ne couvre pas les failles de logique
+  metier (ex: contournement d'autorisation specifique a l'appli)
+- Pas de scan de dependances frontend (pas de JS/npm ici, donc non applicable
+  pour l'instant)
+- Les alertes passent par l'echec de job + email GitHub par defaut — pas de
+  notification push immediate (Slack/Discord), a ajouter plus tard si besoin
+
 ## CI/CD
 
 Le pipeline (`.github/workflows/ci-cd.yml`) a 3 etapes :

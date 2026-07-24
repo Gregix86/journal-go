@@ -7,11 +7,16 @@ on:
     branches: ["main"]
 
 jobs:
-  # ---------- CI : verifie que tout compile et respecte le formatage ----------
+  # ---------- CI : compilation + analyses statiques (SAST, secrets, IaC, SCA) ----------
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historique complet, necessaire pour gitleaks
 
       - uses: actions/setup-go@v5
         with:
@@ -32,8 +37,50 @@ jobs:
             exit 1
           fi
 
-  # ---------- Build : construit l'image Docker et la pousse sur GHCR ----------
-  # Uniquement sur push vers main (pas sur les pull requests).
+      - name: govulncheck (SCA - vulnerabilites connues dans le code/dependances Go)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: gosec (SAST - failles dans notre propre code)
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          gosec -fmt sarif -out gosec-results.sarif ./... || true
+          gosec ./...
+
+      - name: Publie les resultats gosec dans l'onglet Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gosec-results.sarif
+          category: gosec
+
+      - name: gitleaks (secrets scanning - mots de passe/cles oublies dans Git)
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/gitleaks/gitleaks/releases/latest | grep tag_name | cut -d '"' -f4 | sed 's/^v//')
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${LATEST}/gitleaks_${LATEST}_linux_x64.tar.gz" -o gitleaks.tar.gz
+          tar xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks detect --source . --verbose --redact
+
+      - name: Trivy (IaC - Dockerfile / docker-compose mal configures)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: sarif
+          output: trivy-config.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Publie les resultats Trivy config dans l'onglet Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+
+  # ---------- Build : construit l'image Docker, la pousse, et scan SCA/conteneur ----------
   build-and-push:
     needs: build-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -41,6 +88,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
@@ -63,9 +111,61 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+      - name: Scan de vulnerabilites de l'image (Trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: sarif
+          output: trivy-image.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+
+      - name: Publie les resultats Trivy image dans l'onglet Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  # ---------- DAST : attaque le site en conditions reelles (isole, pas la prod) ----------
+  dast-scan:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nom d'image en minuscules
+        run: echo "IMAGE_NAME=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Demarre une instance jetable de l'app pour le scan
+        run: |
+          cat > .env <<EOF
+          SECRET_KEY=ci-scan-secret
+          SITE_NAME=Scan CI
+          ADMIN_USERNAME=admin
+          ADMIN_PASSWORD=ci-scan-password-temp
+          EOF
+          sed "s#image: .*#image: ${{ env.IMAGE_NAME }}:${{ github.sha }}#" docker-compose.prod.yml > docker-compose.ci.yml
+          docker compose -f docker-compose.ci.yml up -d
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/ && break
+            sleep 2
+          done
+
+      - name: OWASP ZAP baseline scan (DAST)
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: "http://localhost:8000/"
+          fail_action: true
+
+      - name: Arrete l'instance jetable
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
+
   # ---------- Deploy : connexion SSH vers ton VPS ----------
   deploy:
-    needs: build-and-push
+    needs: [build-and-push, dast-scan]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
