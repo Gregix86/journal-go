@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -89,8 +90,17 @@ func main() {
 	})
 
 	addr := ":" + cfg.Port
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: r,
+		// ReadHeaderTimeout protege contre les attaques "slowloris" (connexions
+		// ouvertes qui envoient les en-tetes tres lentement). Pas de ReadTimeout
+		// global car les uploads de photos/videos peuvent prendre du temps.
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 	log.Printf("Le carnet ecoute sur %s", addr)
-	if err := http.ListenAndServe(addr, r); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

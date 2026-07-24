@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
+	"regexp"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -162,7 +162,11 @@ func (a *App) UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
 	name := strings.TrimSpace(r.FormValue("name"))
 	description := r.FormValue("description")
 	if name == "" {
@@ -170,14 +174,14 @@ func (a *App) UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cat, err := a.Queries.GetCategoryByID(r.Context(), int32(id))
+	cat, err := a.Queries.GetCategoryByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, "Categorie introuvable", http.StatusNotFound)
 		return
 	}
 
 	err = a.Queries.UpdateCategory(r.Context(), db.UpdateCategoryParams{
-		ID: int32(id), Name: name, Description: description, Accent: cat.Accent,
+		ID: id, Name: name, Description: description, Accent: cat.Accent,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -188,9 +192,13 @@ func (a *App) UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
 
-	count, err := a.Queries.CountEntriesInCategory(ctx, int32(id))
+	count, err := a.Queries.CountEntriesInCategory(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -201,7 +209,7 @@ func (a *App) DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := a.Queries.DeleteCategory(ctx, int32(id)); err != nil {
+	if err := a.Queries.DeleteCategory(ctx, id); err != nil {
 		http.Redirect(w, r, "/admin?catError="+url.QueryEscape("Suppression impossible"), http.StatusSeeOther)
 		return
 	}
@@ -221,9 +229,13 @@ func (a *App) NewEntryForm(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) EditEntryForm(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
 
-	row, err := a.Queries.GetEntryByID(ctx, int32(id))
+	row, err := a.Queries.GetEntryByID(ctx, id)
 	if err != nil {
 		http.Error(w, "Entree introuvable", http.StatusNotFound)
 		return
@@ -313,12 +325,12 @@ func parseRecipeForm(r *http.Request) recipeFormData {
 	ingredientsJSON, _ := json.Marshal(ingredients)
 	stepsJSON, _ := json.Marshal(cleanSteps)
 
-	servings, _ := strconv.Atoi(r.FormValue("servings"))
-	prep, _ := strconv.Atoi(r.FormValue("prep_minutes"))
-	cook, _ := strconv.Atoi(r.FormValue("cook_minutes"))
+	servings, _ := parseInt32(r.FormValue("servings"))
+	prep, _ := parseInt32(r.FormValue("prep_minutes"))
+	cook, _ := parseInt32(r.FormValue("cook_minutes"))
 
 	return recipeFormData{
-		Servings: int32(servings), Prep: int32(prep), Cook: int32(cook),
+		Servings: servings, Prep: prep, Cook: cook,
 		Ingredients: ingredientsJSON, Steps: stepsJSON,
 	}
 }
@@ -326,13 +338,13 @@ func parseRecipeForm(r *http.Request) recipeFormData {
 func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 	ctx := r.Context()
 
-	if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
+	if err := r.ParseMultipartForm(maxUploadBytes); err != nil { // #nosec G120 -- deja borne par maxUploadBytes (200 Mo)
 		http.Error(w, "Formulaire invalide ou fichiers trop volumineux: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	title := r.FormValue("title")
-	categoryID, _ := strconv.Atoi(r.FormValue("category_id"))
+	categoryID, _ := parseInt32(r.FormValue("category_id"))
 	entryType := r.FormValue("entry_type")
 	excerpt := r.FormValue("excerpt")
 	content := r.FormValue("content_markdown")
@@ -346,6 +358,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 	}
 
 	var entryID int32
+	var err error
 
 	if !isEdit {
 		baseSlug := slugify.Slugify(title)
@@ -365,7 +378,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 		}
 
 		entry, err := a.Queries.CreateEntry(ctx, db.CreateEntryParams{
-			CategoryID: int32(categoryID), EntryType: entryType, Title: title, Slug: slug,
+			CategoryID: categoryID, EntryType: entryType, Title: title, Slug: slug,
 			Excerpt: excerpt, ContentMarkdown: content, Published: published, IsPrivate: isPrivate,
 			EntryNumber: int32(count) + 1,
 		})
@@ -379,10 +392,13 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 		if msg == "" {
 			msg = "Version initiale"
 		}
-		a.createVersionSnapshot(ctx, entryID, 1, title, excerpt, content, entryType, int32(categoryID), rf, msg)
+		a.createVersionSnapshot(ctx, entryID, 1, title, excerpt, content, entryType, categoryID, rf, msg)
 	} else {
-		id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-		entryID = int32(id)
+		entryID, err = parseInt32(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+			return
+		}
 
 		old, err := a.Queries.GetEntryByID(ctx, entryID)
 		if err != nil {
@@ -399,7 +415,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 		}
 
 		err = a.Queries.UpdateEntry(ctx, db.UpdateEntryParams{
-			ID: entryID, CategoryID: int32(categoryID), EntryType: entryType, Title: title,
+			ID: entryID, CategoryID: categoryID, EntryType: entryType, Title: title,
 			Excerpt: excerpt, ContentMarkdown: content, Published: published, IsPrivate: isPrivate,
 		})
 		if err != nil {
@@ -408,7 +424,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 		}
 
 		changed := old.Title != title || old.Excerpt != excerpt || old.ContentMarkdown != content ||
-			old.EntryType != entryType || old.CategoryID != int32(categoryID)
+			old.EntryType != entryType || old.CategoryID != categoryID
 		if entryType == "recipe" {
 			if !hasOldRecipe {
 				changed = true
@@ -428,7 +444,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 			if msg == "" {
 				msg = "Mise a jour"
 			}
-			a.createVersionSnapshot(ctx, entryID, latest+1, title, excerpt, content, entryType, int32(categoryID), rf, msg)
+			a.createVersionSnapshot(ctx, entryID, latest+1, title, excerpt, content, entryType, categoryID, rf, msg)
 		}
 	}
 
@@ -447,7 +463,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 				continue
 			}
 			_, _ = a.saveUpload(ctx, file, header, entryID)
-			file.Close()
+			_ = file.Close()
 		}
 	}
 
@@ -483,19 +499,26 @@ func (a *App) createVersionSnapshot(ctx context.Context, entryID, versionNumber 
 	_, _ = a.Queries.CreateEntryVersion(ctx, params)
 }
 
+var safeExtension = regexp.MustCompile(`^\.[A-Za-z0-9]{1,10}$`)
+
 func (a *App) saveUpload(ctx context.Context, file multipart.File, header *multipart.FileHeader, entryID int32) (db.Medium, error) {
 	key, err := authx.GenerateAPIKey() // reutilise comme composant aleatoire pour un nom de fichier unique
 	if err != nil {
 		return db.Medium{}, err
 	}
 	ext := filepath.Ext(header.Filename)
+	if !safeExtension.MatchString(ext) {
+		ext = "" // extension inattendue (caracteres non alphanumeriques) : on l'ignore par securite
+	}
 	uniqueName := key[:16] + ext
+	// destPath ne depend jamais du nom de fichier fourni par l'utilisateur : uniquement
+	// d'un nom aleatoire genere cote serveur (key) et d'une extension filtree ci-dessus.
 	destPath := filepath.Join(a.Cfg.UploadDir, uniqueName)
 
-	if err := os.MkdirAll(a.Cfg.UploadDir, 0o755); err != nil {
+	if err := os.MkdirAll(a.Cfg.UploadDir, 0o750); err != nil {
 		return db.Medium{}, err
 	}
-	out, err := os.Create(destPath)
+	out, err := os.Create(destPath) // #nosec G304,G703 -- destPath est construit uniquement a partir d'un nom aleatoire + extension filtree, jamais du nom fourni par l'utilisateur
 	if err != nil {
 		return db.Medium{}, err
 	}
@@ -521,10 +544,14 @@ func (a *App) saveUpload(ctx context.Context, file multipart.File, header *multi
 
 func (a *App) DeleteEntryHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	_ = a.Queries.DeleteRecipeDetail(ctx, int32(id))
-	_ = a.Queries.DeleteMediaByEntry(ctx, sql.NullInt32{Int32: int32(id), Valid: true})
-	_ = a.Queries.DeleteEntry(ctx, int32(id))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
+	_ = a.Queries.DeleteRecipeDetail(ctx, id)
+	_ = a.Queries.DeleteMediaByEntry(ctx, sql.NullInt32{Int32: id, Valid: true})
+	_ = a.Queries.DeleteEntry(ctx, id)
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
 
@@ -532,15 +559,19 @@ func (a *App) DeleteEntryHandler(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) AdminEntryVersions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
 
-	entry, err := a.Queries.GetEntryByID(ctx, int32(id))
+	entry, err := a.Queries.GetEntryByID(ctx, id)
 	if err != nil {
 		http.Error(w, "Entree introuvable", http.StatusNotFound)
 		return
 	}
 
-	rows, err := a.Queries.ListEntryVersions(ctx, int32(id))
+	rows, err := a.Queries.ListEntryVersions(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -560,17 +591,25 @@ func (a *App) AdminEntryVersions(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) RestoreEntryVersion(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	versionNumber, _ := strconv.Atoi(chi.URLParam(r, "version"))
+	id, err := parseInt32(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Identifiant invalide", http.StatusBadRequest)
+		return
+	}
+	versionNumber, err := parseInt32(chi.URLParam(r, "version"))
+	if err != nil {
+		http.Error(w, "Numero de version invalide", http.StatusBadRequest)
+		return
+	}
 
-	v, err := a.Queries.GetEntryVersion(ctx, db.GetEntryVersionParams{EntryID: int32(id), VersionNumber: int32(versionNumber)})
+	v, err := a.Queries.GetEntryVersion(ctx, db.GetEntryVersionParams{EntryID: id, VersionNumber: versionNumber})
 	if err != nil {
 		http.Error(w, "Version introuvable", http.StatusNotFound)
 		return
 	}
 
 	err = a.Queries.UpdateEntry(ctx, db.UpdateEntryParams{
-		ID: int32(id), CategoryID: v.CategoryID, EntryType: v.EntryType, Title: v.Title,
+		ID: id, CategoryID: v.CategoryID, EntryType: v.EntryType, Title: v.Title,
 		Excerpt: v.Excerpt, ContentMarkdown: v.ContentMarkdown,
 		Published: true, IsPrivate: false, // conserves par defaut ; ajustable ensuite dans le formulaire d'edition
 	})
@@ -579,9 +618,9 @@ func (a *App) RestoreEntryVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// on conserve le statut publie/prive courant plutot que de l'ecraser :
-	if current, err := a.Queries.GetEntryByID(ctx, int32(id)); err == nil {
+	if current, err := a.Queries.GetEntryByID(ctx, id); err == nil {
 		_ = a.Queries.UpdateEntry(ctx, db.UpdateEntryParams{
-			ID: int32(id), CategoryID: v.CategoryID, EntryType: v.EntryType, Title: v.Title,
+			ID: id, CategoryID: v.CategoryID, EntryType: v.EntryType, Title: v.Title,
 			Excerpt: v.Excerpt, ContentMarkdown: v.ContentMarkdown,
 			Published: current.Published, IsPrivate: current.IsPrivate,
 		})
@@ -589,14 +628,14 @@ func (a *App) RestoreEntryVersion(w http.ResponseWriter, r *http.Request) {
 
 	if v.EntryType == "recipe" && v.RecipeIngredients.Valid {
 		_ = a.Queries.UpsertRecipeDetail(ctx, db.UpsertRecipeDetailParams{
-			EntryID: int32(id), Servings: v.RecipeServings.Int32, PrepMinutes: v.RecipePrepMinutes.Int32,
+			EntryID: id, Servings: v.RecipeServings.Int32, PrepMinutes: v.RecipePrepMinutes.Int32,
 			CookMinutes: v.RecipeCookMinutes.Int32, Ingredients: v.RecipeIngredients.RawMessage, Steps: v.RecipeSteps.RawMessage,
 		})
 	}
 
-	latest, err := a.Queries.GetLatestVersionNumber(ctx, int32(id))
+	latest, err := a.Queries.GetLatestVersionNumber(ctx, id)
 	if err != nil {
-		latest = int32(versionNumber)
+		latest = versionNumber
 	}
 	var rf recipeFormData
 	if v.EntryType == "recipe" {
@@ -606,7 +645,7 @@ func (a *App) RestoreEntryVersion(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	msg := fmt.Sprintf("Restauration de la version %d", versionNumber)
-	a.createVersionSnapshot(ctx, int32(id), latest+1, v.Title, v.Excerpt, v.ContentMarkdown, v.EntryType, v.CategoryID, rf, msg)
+	a.createVersionSnapshot(ctx, id, latest+1, v.Title, v.Excerpt, v.ContentMarkdown, v.EntryType, v.CategoryID, rf, msg)
 
 	http.Redirect(w, r, "/admin", http.StatusSeeOther)
 }
@@ -647,7 +686,11 @@ func (a *App) EntryHistory(w http.ResponseWriter, r *http.Request) {
 func (a *App) EntryVersionPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	slug := chi.URLParam(r, "slug")
-	versionNumber, _ := strconv.Atoi(chi.URLParam(r, "version"))
+	versionNumber, err := parseInt32(chi.URLParam(r, "version"))
+	if err != nil {
+		http.Error(w, "Numero de version invalide", http.StatusBadRequest)
+		return
+	}
 
 	entry, err := a.Queries.GetEntryBySlug(ctx, slug)
 	if err != nil || !entry.Published {
@@ -659,7 +702,7 @@ func (a *App) EntryVersionPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v, err := a.Queries.GetEntryVersion(ctx, db.GetEntryVersionParams{EntryID: entry.ID, VersionNumber: int32(versionNumber)})
+	v, err := a.Queries.GetEntryVersion(ctx, db.GetEntryVersionParams{EntryID: entry.ID, VersionNumber: versionNumber})
 	if err != nil {
 		http.Error(w, "Version introuvable", http.StatusNotFound)
 		return

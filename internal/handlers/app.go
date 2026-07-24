@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"strconv"
 
 	"carnet/internal/authx"
 	"carnet/internal/config"
@@ -39,4 +40,16 @@ func (a *App) base(r *http.Request, title, activeCategory string) Base {
 		ActiveCategory: activeCategory,
 		Title:          title,
 	}
+}
+
+// parseInt32 convertit une chaine en int32 en verifiant les bornes via
+// strconv.ParseInt(s, 10, 32), qui renvoie une erreur si la valeur ne rentre
+// pas dans un int32 - contrairement a strconv.Atoi + conversion, qui
+// depasserait silencieusement (integer overflow) sur une tres grande valeur.
+func parseInt32(s string) (int32, error) {
+	v, err := strconv.ParseInt(s, 10, 32) // #nosec G115 -- bitSize=32 garantit que v tient dans un int32
+	if err != nil {
+		return 0, err
+	}
+	return int32(v), nil
 }
