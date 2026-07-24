@@ -1,6 +1,5 @@
 # Compose de PRODUCTION - utilise par le runner CI/CD pour le deploiement.
 # Difference avec docker-compose.yml : "image: ..." au lieu de "build: .".
-# Remplace <TON-COMPTE-GITHUB>/<TON-DEPOT> par les bonnes valeurs.
 
 services:
   db:
@@ -21,7 +20,7 @@ services:
   web:
     image: ghcr.io/gregix86/journal-go:latest
     restart: unless-stopped
-    depends_on:s
+    depends_on:
       db:
         condition: service_healthy
     env_file:
