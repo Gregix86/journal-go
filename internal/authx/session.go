@@ -47,7 +47,7 @@ func (s *Sessions) CurrentUserID(r *http.Request) int32 {
 	if !ok {
 		return 0
 	}
-	return int32(v)
+	return int32(v) // #nosec G115 -- v provient toujours d'un int32 (l'ID utilisateur stocke par Login), jamais d'une entree externe
 }
 
 func (s *Sessions) IsAuthenticated(r *http.Request) bool {

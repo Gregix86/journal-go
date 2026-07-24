@@ -380,7 +380,7 @@ func (a *App) saveEntry(w http.ResponseWriter, r *http.Request, isEdit bool) {
 		entry, err := a.Queries.CreateEntry(ctx, db.CreateEntryParams{
 			CategoryID: categoryID, EntryType: entryType, Title: title, Slug: slug,
 			Excerpt: excerpt, ContentMarkdown: content, Published: published, IsPrivate: isPrivate,
-			EntryNumber: int32(count) + 1,
+			EntryNumber: int32(count) + 1, // #nosec G115 -- nombre total d'entrees du blog, ne peut pas realistement depasser 2 milliards
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
