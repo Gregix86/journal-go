@@ -59,6 +59,10 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(securityHeaders)
+	// Protection CSRF native (Go 1.25+) : bloque les requetes cross-origin qui
+	// changent l'etat (POST/PUT/DELETE...) en verifiant Sec-Fetch-Site/Origin.
+	// Pas de jeton/cookie a gerer, contrairement aux anciennes solutions.
+	r.Use(http.NewCrossOriginProtection().Handler)
 
 	fileServer := http.FileServer(http.Dir("static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fileServer))
@@ -111,12 +115,17 @@ func securityHeaders(next http.Handler) http.Handler {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()")
 		w.Header().Set("Content-Security-Policy",
 			"default-src 'self'; "+
 				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "+
 				"font-src https://fonts.gstatic.com; "+
 				"img-src 'self' data:; "+
-				"script-src 'self' 'unsafe-inline'")
+				"script-src 'self' 'unsafe-inline'; "+
+				"frame-ancestors 'none'; "+
+				"base-uri 'self'; "+
+				"form-action 'self'; "+
+				"object-src 'none'")
 		next.ServeHTTP(w, r)
 	})
 }
