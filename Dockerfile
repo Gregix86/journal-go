@@ -20,4 +20,5 @@ COPY --chown=nonroot:nonroot templates ./templates
 COPY --chown=nonroot:nonroot static ./static
  
 EXPOSE 8000
+USER nonroot:nonroot
 ENTRYPOINT ["./carnet"]
