@@ -145,8 +145,12 @@ jobs:
           ADMIN_USERNAME=admin
           ADMIN_PASSWORD=ci-scan-password-temp
           EOF
-          sed "s#image: .*#image: ${{ env.IMAGE_NAME }}:${{ github.sha }}#" docker-compose.prod.yml > docker-compose.ci.yml
-          docker compose -f docker-compose.ci.yml up -d
+          sed "s#image: ghcr.io/.*#image: ${{ env.IMAGE_NAME }}:${{ github.sha }}#" docker-compose.prod.yml > docker-compose.ci.yml
+          docker compose -f docker-compose.ci.yml up -d || {
+            echo "::error::echec du demarrage, logs des conteneurs :"
+            docker compose -f docker-compose.ci.yml logs
+            exit 1
+          }
           for i in $(seq 1 30); do
             curl -sf http://localhost:8000/ && break
             sleep 2
