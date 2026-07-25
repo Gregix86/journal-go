@@ -23,7 +23,7 @@
     <div class="admin-row-actions">
       <a class="btn secondary" href="/admin/entries/{{.ID}}/edit">Editer</a>
       <a class="btn secondary" href="/admin/entries/{{.ID}}/versions">Historique</a>
-      <form method="post" action="/admin/entries/{{.ID}}/delete" onsubmit="return confirm('Supprimer cette entree ?');">
+      <form method="post" action="/admin/entries/{{.ID}}/delete" class="confirm-submit" data-confirm="Supprimer cette entree ?">
         <button class="danger" type="submit">Suppr.</button>
       </form>
     </div>
@@ -51,7 +51,7 @@
       <button type="submit" class="secondary">Enregistrer</button>
     </form>
     <div class="admin-row-actions">
-      <form method="post" action="/admin/categories/{{.ID}}/delete" onsubmit="return confirm('Supprimer cette categorie ?');">
+      <form method="post" action="/admin/categories/{{.ID}}/delete" class="confirm-submit" data-confirm="Supprimer cette categorie ?">
         <button class="danger" type="submit">Suppr.</button>
       </form>
     </div>
@@ -67,4 +67,6 @@
     </div>
   </form>
 </div>
+
+<script src="/static/js/admin.js"></script>
 {{end}}

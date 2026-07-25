@@ -14,7 +14,7 @@
     </div>
     <div class="admin-row-actions">
       <a class="btn secondary" href="/admin/entries/{{$.EntryID}}/edit">Editer l'entree</a>
-      <form method="post" action="/admin/entries/{{$.EntryID}}/versions/{{.Number}}/restore" onsubmit="return confirm('Restaurer cette version ? Cela creera une nouvelle version basee sur celle-ci.');">
+      <form method="post" action="/admin/entries/{{$.EntryID}}/versions/{{.Number}}/restore" class="confirm-submit" data-confirm="Restaurer cette version ? Cela creera une nouvelle version basee sur celle-ci.">
         <button class="secondary" type="submit">Restaurer</button>
       </form>
     </div>
@@ -23,4 +23,6 @@
   <p class="hint">Aucune version enregistree.</p>
   {{end}}
 </div>
+
+<script src="/static/js/admin.js"></script>
 {{end}}

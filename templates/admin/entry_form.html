@@ -22,7 +22,7 @@
 
   <div class="field">
     <label>Type</label>
-    <select name="entry_type" id="entry_type" onchange="toggleRecipe()">
+    <select name="entry_type" id="entry_type">
       <option value="article" {{if eq .EntryType "article"}}selected{{end}}>Article</option>
       <option value="recipe" {{if eq .EntryType "recipe"}}selected{{end}}>Recette</option>
     </select>
@@ -48,18 +48,18 @@
         <div class="repeat-row">
           <input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)" value="{{.Amount}}">
           <input type="text" name="ingredient_item" placeholder="Ingredient" value="{{.Item}}">
-          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+          <button type="button" class="secondary remove-row">x</button>
         </div>
         {{end}}
       {{else}}
         <div class="repeat-row">
           <input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)">
           <input type="text" name="ingredient_item" placeholder="Ingredient">
-          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+          <button type="button" class="secondary remove-row">x</button>
         </div>
       {{end}}
     </div>
-    <button type="button" class="secondary" onclick="addIngredientRow()">+ Ingredient</button>
+    <button type="button" class="secondary" id="add-ingredient">+ Ingredient</button>
 
     <label style="margin-top:1rem;">Etapes</label>
     <div id="steps-rows">
@@ -67,17 +67,17 @@
         {{range .Recipe.Steps}}
         <div class="repeat-row">
           <input type="text" name="step_text" value="{{.}}">
-          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+          <button type="button" class="secondary remove-row">x</button>
         </div>
         {{end}}
       {{else}}
         <div class="repeat-row">
           <input type="text" name="step_text" placeholder="Decrire l'etape">
-          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+          <button type="button" class="secondary remove-row">x</button>
         </div>
       {{end}}
     </div>
-    <button type="button" class="secondary" onclick="addStepRow()">+ Etape</button>
+    <button type="button" class="secondary" id="add-step">+ Etape</button>
   </div>
 
   <div class="field">
@@ -121,23 +121,5 @@
   <a class="btn secondary" href="/admin">Annuler</a>
 </form>
 
-<script>
-function toggleRecipe() {
-  const type = document.getElementById('entry_type').value;
-  document.getElementById('recipe-fields').style.display = (type === 'recipe') ? 'block' : 'none';
-}
-function addIngredientRow() {
-  const row = document.createElement('div');
-  row.className = 'repeat-row';
-  row.innerHTML = '<input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)"><input type="text" name="ingredient_item" placeholder="Ingredient"><button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>';
-  document.getElementById('ingredients-rows').appendChild(row);
-}
-function addStepRow() {
-  const row = document.createElement('div');
-  row.className = 'repeat-row';
-  row.innerHTML = '<input type="text" name="step_text" placeholder="Decrire l\'etape"><button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>';
-  document.getElementById('steps-rows').appendChild(row);
-}
-toggleRecipe();
-</script>
+<script src="/static/js/entry_form.js"></script>
 {{end}}
