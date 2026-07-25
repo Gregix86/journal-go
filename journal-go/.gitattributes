@@ -1,0 +1,21 @@
+# Force les fins de ligne LF (Unix) pour les fichiers texte, quel que soit
+# l'OS utilise pour cloner/editer le depot. Evite que gofmt (qui tourne sur
+# des runners Linux) considere un fichier comme "mal formate" juste parce
+# que Windows/Git l'a checkout avec des CRLF.
+
+* text=auto eol=lf
+
+*.go text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary

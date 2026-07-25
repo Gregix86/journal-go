@@ -1,0 +1,70 @@
+{{define "content"}}
+<div class="flex-between">
+  <div>
+    <p class="hint" style="margin:0;">Connecte en tant que {{.Username}}</p>
+    <h1 style="margin-bottom:0;">Tableau de bord</h1>
+  </div>
+  <div style="display:flex; gap:0.6rem;">
+    <a class="btn" href="/admin/entries/new">+ Nouvelle entree</a>
+    <a class="btn secondary" href="/admin/logout">Se deconnecter</a>
+  </div>
+</div>
+
+<div class="admin-card">
+  {{range .Entries}}
+  <div class="admin-row">
+    <div class="admin-row-main">
+      <span class="num mono">{{pad3 .Number}}</span>
+      <div class="info">
+        <strong><a href="/entree/{{.Slug}}" target="_blank">{{.Title}}</a></strong>
+        <span class="hint">{{.CategoryName}} · {{.TypeLabel}} · {{.StatusLabel}} · {{dateFR .CreatedAt}}</span>
+      </div>
+    </div>
+    <div class="admin-row-actions">
+      <a class="btn secondary" href="/admin/entries/{{.ID}}/edit">Editer</a>
+      <a class="btn secondary" href="/admin/entries/{{.ID}}/versions">Historique</a>
+      <form method="post" action="/admin/entries/{{.ID}}/delete" onsubmit="return confirm('Supprimer cette entree ?');">
+        <button class="danger" type="submit">Suppr.</button>
+      </form>
+    </div>
+  </div>
+  {{else}}
+  <p class="hint">Aucune entree pour le moment.</p>
+  {{end}}
+</div>
+
+<div class="admin-card">
+  <h2 style="font-size:1.05rem;">Categories</h2>
+  {{if .CatError}}<div class="error-box">{{.CatError}}</div>{{end}}
+
+  {{range .AdminCategories}}
+  <div class="admin-row">
+    <div class="admin-row-main" style="flex:0 1 160px;">
+      <div class="info">
+        <strong class="mono" style="font-size:0.9rem;">{{.Slug}}</strong>
+        <span class="hint">{{.EntryCount}} entree(s)</span>
+      </div>
+    </div>
+    <form class="admin-row-form" method="post" action="/admin/categories/{{.ID}}/edit">
+      <input type="text" name="name" value="{{.Name}}" placeholder="Nom">
+      <input type="text" name="description" value="{{.Description}}" placeholder="Description">
+      <button type="submit" class="secondary">Enregistrer</button>
+    </form>
+    <div class="admin-row-actions">
+      <form method="post" action="/admin/categories/{{.ID}}/delete" onsubmit="return confirm('Supprimer cette categorie ?');">
+        <button class="danger" type="submit">Suppr.</button>
+      </form>
+    </div>
+  </div>
+  {{end}}
+
+  <h3 style="margin-top:1.4rem;font-size:0.9rem;">Ajouter une categorie</h3>
+  <form method="post" action="/admin/categories/new">
+    <div class="repeat-row">
+      <input type="text" name="name" placeholder="Nom (ex: Voyages)" required>
+      <input type="text" name="description" placeholder="Description (optionnel)">
+      <button type="submit">Creer</button>
+    </div>
+  </form>
+</div>
+{{end}}

@@ -1,0 +1,143 @@
+{{define "content"}}
+<h1>{{if .IsEdit}}Editer l'entree{{else}}Nouvelle entree{{end}}</h1>
+
+<form class="admin-card" method="post"
+      action="{{if .IsEdit}}/admin/entries/{{.EntryID}}/edit{{else}}/admin/entries/new{{end}}"
+      enctype="multipart/form-data">
+
+  <div class="field">
+    <label>Titre</label>
+    <input type="text" name="title" required value="{{.EntryTitle}}">
+  </div>
+
+  <div class="field">
+    <label>Categorie</label>
+    <select name="category_id" required>
+      {{$catID := .CategoryID}}
+      {{range .Categories}}
+      <option value="{{.ID}}" {{if eq .ID $catID}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Type</label>
+    <select name="entry_type" id="entry_type" onchange="toggleRecipe()">
+      <option value="article" {{if eq .EntryType "article"}}selected{{end}}>Article</option>
+      <option value="recipe" {{if eq .EntryType "recipe"}}selected{{end}}>Recette</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Resume court</label>
+    <input type="text" name="excerpt" maxlength="500" value="{{.Excerpt}}">
+  </div>
+
+  <div class="field" id="recipe-fields" style="display:none;">
+    <label>Details de la recette</label>
+    <div class="repeat-row">
+      <input type="number" name="servings" placeholder="Portions" value="{{if .Recipe}}{{.Recipe.Servings}}{{else}}4{{end}}">
+      <input type="number" name="prep_minutes" placeholder="Preparation (min)" value="{{if .Recipe}}{{.Recipe.PrepMinutes}}{{else}}0{{end}}">
+      <input type="number" name="cook_minutes" placeholder="Cuisson (min)" value="{{if .Recipe}}{{.Recipe.CookMinutes}}{{else}}0{{end}}">
+    </div>
+
+    <label style="margin-top:1rem;">Ingredients</label>
+    <div id="ingredients-rows">
+      {{if .Recipe}}
+        {{range .Recipe.Ingredients}}
+        <div class="repeat-row">
+          <input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)" value="{{.Amount}}">
+          <input type="text" name="ingredient_item" placeholder="Ingredient" value="{{.Item}}">
+          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+        </div>
+        {{end}}
+      {{else}}
+        <div class="repeat-row">
+          <input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)">
+          <input type="text" name="ingredient_item" placeholder="Ingredient">
+          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+        </div>
+      {{end}}
+    </div>
+    <button type="button" class="secondary" onclick="addIngredientRow()">+ Ingredient</button>
+
+    <label style="margin-top:1rem;">Etapes</label>
+    <div id="steps-rows">
+      {{if .Recipe}}
+        {{range .Recipe.Steps}}
+        <div class="repeat-row">
+          <input type="text" name="step_text" value="{{.}}">
+          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+        </div>
+        {{end}}
+      {{else}}
+        <div class="repeat-row">
+          <input type="text" name="step_text" placeholder="Decrire l'etape">
+          <button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>
+        </div>
+      {{end}}
+    </div>
+    <button type="button" class="secondary" onclick="addStepRow()">+ Etape</button>
+  </div>
+
+  <div class="field">
+    <label>Contenu (Markdown)</label>
+    <textarea name="content_markdown" placeholder="Ecris ton article ici en Markdown...">{{.ContentMarkdown}}</textarea>
+  </div>
+
+  <div class="field">
+    <label>Message de version (optionnel, comme un message de commit)</label>
+    <input type="text" name="version_message" placeholder="{{if .IsEdit}}ex: Correction d'une erreur dans l'etape 3{{else}}ex: Premiere publication{{end}}">
+    <p class="hint">Un nouveau numero de version n'est cree que si le contenu a reellement change.</p>
+  </div>
+
+  <div class="field">
+    <label>Image de couverture</label>
+    <input type="file" name="cover_image" accept="image/*">
+    {{if .CoverFilename}}<p class="hint">Actuelle : {{.CoverFilename}}</p>{{end}}
+  </div>
+
+  <div class="field">
+    <label>Galerie (photos / videos, plusieurs fichiers possibles)</label>
+    <input type="file" name="gallery" accept="image/*,video/*" multiple>
+    {{if .ExistingMediaCount}}<p class="hint">{{.ExistingMediaCount}} fichier(s) deja attaches.</p>{{end}}
+  </div>
+
+  <div class="field">
+    <label style="display:flex;align-items:center;gap:0.5rem;">
+      <input type="checkbox" name="published" style="width:auto;" {{if .Published}}checked{{end}}>
+      Publier immediatement
+    </label>
+  </div>
+
+  <div class="field">
+    <label style="display:flex;align-items:center;gap:0.5rem;">
+      <input type="checkbox" name="is_private" style="width:auto;" {{if .IsPrivate}}checked{{end}}>
+      Entree privee (visible uniquement apres connexion)
+    </label>
+  </div>
+
+  <button type="submit">{{if .IsEdit}}Enregistrer{{else}}Publier{{end}}</button>
+  <a class="btn secondary" href="/admin">Annuler</a>
+</form>
+
+<script>
+function toggleRecipe() {
+  const type = document.getElementById('entry_type').value;
+  document.getElementById('recipe-fields').style.display = (type === 'recipe') ? 'block' : 'none';
+}
+function addIngredientRow() {
+  const row = document.createElement('div');
+  row.className = 'repeat-row';
+  row.innerHTML = '<input type="text" name="ingredient_amount" placeholder="Quantite (ex: 200 g)"><input type="text" name="ingredient_item" placeholder="Ingredient"><button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>';
+  document.getElementById('ingredients-rows').appendChild(row);
+}
+function addStepRow() {
+  const row = document.createElement('div');
+  row.className = 'repeat-row';
+  row.innerHTML = '<input type="text" name="step_text" placeholder="Decrire l\'etape"><button type="button" class="secondary" onclick="this.parentElement.remove()">x</button>';
+  document.getElementById('steps-rows').appendChild(row);
+}
+toggleRecipe();
+</script>
+{{end}}

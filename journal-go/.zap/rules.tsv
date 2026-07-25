@@ -1,0 +1,23 @@
+# Regles ZAP : alertes volontairement ignorees, avec justification.
+# Format : <rule id>	<action>	(commentaire)
+# Ne pas ajouter de regle ici sans une vraie raison documentee.
+
+# Contenu dynamique/authentifie par nature (page d'accueil, categories,
+# admin) : ne pas etre mis en cache est attendu, pas une faille.
+10049	IGNORE	Contenu dynamique non-cacheable par conception
+
+# Simple detection informative d'un formulaire de connexion existant -
+# ce n'est pas une vulnerabilite, juste une observation de ZAP.
+10111	IGNORE	Detection informative du formulaire de connexion, pas une faille
+
+# L'integrite des sous-ressources (SRI) n'est pas praticable sur les CSS
+# Google Fonts, qui sont generees dynamiquement par navigateur et changent
+# de contenu - un hash SRI fixe casserait le chargement des polices.
+# Solution propre : auto-heberger les polices (a envisager plus tard).
+90003	IGNORE	SRI impossible sur Google Fonts sans auto-hebergement des polices
+
+# Cross-Origin-Embedder-Policy (require-corp) risquerait de bloquer le
+# chargement des polices Google Fonts (CORS/CORP pas garantis compatibles
+# sans tests en conditions reelles) pour un benefice quasi nul sur un site
+# perso (COEP sert surtout a isoler SharedArrayBuffer, non utilise ici).
+90004	IGNORE	COEP risquerait de casser Google Fonts, benefice negligeable ici

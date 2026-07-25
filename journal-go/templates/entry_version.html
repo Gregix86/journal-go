@@ -1,0 +1,38 @@
+{{define "content"}}
+<p class="hint"><a href="/entree/{{.EntrySlug}}/historique">← Retour a l'historique</a></p>
+
+<div class="private-flag" style="display:inline-block;margin-bottom:0.8rem;">Version {{.Version.Number}} (archivee)</div>
+<h1>{{.Version.Title}}</h1>
+<p class="hint">{{datetimeFR .Version.CreatedAt}} — {{if .Version.Message}}{{.Version.Message}}{{else}}(sans message){{end}}</p>
+
+{{if .Version.Recipe}}
+{{$r := .Version.Recipe}}
+<div class="recipe-meta">
+  <span>Portions : {{$r.Servings}}</span>
+  <span>Preparation : {{$r.PrepMinutes}} min</span>
+  <span>Cuisson : {{$r.CookMinutes}} min</span>
+</div>
+<div class="recipe-columns">
+  <div>
+    <h3>Ingredients</h3>
+    <ul class="ingredients-list">
+      {{range $r.Ingredients}}
+      <li><span>{{.Item}}</span><span class="amount mono">{{.Amount}}</span></li>
+      {{end}}
+    </ul>
+  </div>
+  <div>
+    <h3>Preparation</h3>
+    <ol class="steps-list">
+      {{range $r.Steps}}
+      <li>{{.}}</li>
+      {{end}}
+    </ol>
+  </div>
+</div>
+{{end}}
+
+<div class="entry-content">
+  {{safeHTML .Version.ContentHTML}}
+</div>
+{{end}}

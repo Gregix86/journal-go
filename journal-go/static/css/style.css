@@ -1,0 +1,263 @@
+/* ============================================================
+   TOKENS — modifie ces valeurs pour changer l'identite visuelle
+   du site sans toucher au reste du CSS.
+   ============================================================ */
+:root {
+  --surface: #FFFFFF;
+  --surface-alt: #FAFAF9;
+  --ink: #14161A;
+  --muted: #6B6E76;
+  --faint: #C9C9C4;
+  --line: #E4E4E1;
+  --accent: #1F5C4A;
+  --accent-bg: #E7F0EC;
+  --danger: #A63D2E;
+  --danger-bg: #F7E9E5;
+
+  --font-display: 'Space Grotesk', Arial, sans-serif;
+  --font-body: 'Inter', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius: 6px;
+  --sidebar-width: 190px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+.mono { font-family: var(--font-mono); }
+
+/* ===== Layout: sidebar (index par sujet) + contenu principal ===== */
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--line); }
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  padding: 1.4rem 1.1rem;
+  background: var(--surface-alt);
+}
+
+.sidebar .brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+  display: block;
+  margin-bottom: 1.4rem;
+}
+
+.sidebar .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.sidebar nav a {
+  display: block;
+  color: var(--ink);
+  font-size: 0.86rem;
+  padding: 0.3rem 0;
+}
+
+.sidebar nav a.active { color: var(--accent); font-weight: 500; }
+
+.sidebar .admin-link {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+main.content {
+  padding: 2.2rem 2.6rem 5rem;
+  max-width: 760px;
+}
+
+main.content-wide {
+  max-width: 1180px;
+}
+
+@media (max-width: 720px) {
+  main.content { padding: 1.6rem 1.2rem 4rem; }
+}
+
+/* ===== Ledger (liste d'entrees numerotees) ===== */
+.ledger-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 0.9rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ledger-num {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--faint);
+}
+
+.ledger-body h2 { font-size: 1.05rem; margin-bottom: 0.15rem; }
+.ledger-body p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+
+.ledger-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.category-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  background: var(--accent-bg);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+  margin-bottom: 0.3rem;
+}
+
+/* ===== Entry / recipe detail ===== */
+.entry-margin-number {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  color: var(--faint);
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.entry-cover {
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  margin: 1.2rem 0 1.6rem;
+}
+
+.entry-content img { max-width: 100%; border-radius: var(--radius); }
+.entry-content pre {
+  background: var(--surface-alt);
+  border: 1px solid var(--line);
+  padding: 1rem;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.entry-content code { font-family: var(--font-mono); font-size: 0.92em; }
+.entry-content table { border-collapse: collapse; width: 100%; }
+.entry-content th, .entry-content td { border: 1px solid var(--line); padding: 0.4rem 0.6rem; text-align: left; }
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+  margin: 1.4rem 0;
+}
+.gallery img, .gallery video {
+  width: 100%; height: 130px; object-fit: cover; border-radius: var(--radius);
+}
+
+.private-flag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--danger);
+  background: var(--danger-bg);
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+/* ===== Recipe ===== */
+.recipe-meta {
+  display: flex; gap: 1.4rem;
+  font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  padding: 0.7rem 0; margin: 1rem 0 1.4rem;
+}
+.recipe-columns { display: grid; grid-template-columns: 1fr 1.6fr; gap: 2rem; margin-top: 1.2rem; }
+@media (max-width: 600px) { .recipe-columns { grid-template-columns: 1fr; } }
+.ingredients-list { list-style: none; padding: 0; margin: 0; }
+.ingredients-list li {
+  display: flex; justify-content: space-between; gap: 1rem;
+  padding: 0.45rem 0; border-bottom: 1px dotted var(--line); font-size: 0.92rem;
+}
+.ingredients-list .amount { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+.steps-list { padding-left: 1.2rem; }
+.steps-list li { margin-bottom: 0.8rem; }
+
+/* ===== Forms (admin) ===== */
+.admin-card {
+  border: 1px solid var(--line); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.4rem;
+}
+.admin-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 0.6rem; padding: 0.8rem 0; border-bottom: 1px solid var(--line);
+}
+.admin-row:last-child { border-bottom: none; }
+.admin-row-main { display: flex; gap: 0.9rem; align-items: baseline; flex: 1 1 220px; min-width: 0; }
+.admin-row-main .num { font-family: var(--font-mono); color: var(--faint); flex-shrink: 0; }
+.admin-row-main .info strong { display: block; }
+.admin-row-main .info .hint { font-size: 0.8rem; }
+.admin-row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; flex-shrink: 0; }
+.admin-row-form { display: flex; gap: 0.4rem; flex-wrap: wrap; flex: 2 1 260px; min-width: 0; }
+.admin-row-form input { flex: 1 1 90px; min-width: 0; }
+.field { margin-bottom: 1rem; }
+.field label {
+  display: block; font-family: var(--font-mono); font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.35rem;
+}
+input[type=text], input[type=number], input[type=password], input[type=file],
+select, textarea {
+  width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--line);
+  border-radius: var(--radius); font-family: inherit; font-size: 0.94rem; background: var(--surface);
+}
+textarea { min-height: 160px; font-family: var(--font-mono); font-size: 0.87rem; }
+button, .btn {
+  font-family: var(--font-mono); font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em;
+  background: var(--ink); color: #fff; border: none; padding: 0.65rem 1.2rem;
+  border-radius: var(--radius); cursor: pointer; text-decoration: none; display: inline-block;
+}
+button.secondary, .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+button.danger { background: var(--danger); }
+.repeat-row { display: flex; gap: 0.55rem; margin-bottom: 0.5rem; }
+.repeat-row input { flex: 1; }
+table.admin-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table.admin-table th, table.admin-table td { text-align: left; padding: 0.5rem 0.35rem; border-bottom: 1px solid var(--line); }
+table.admin-table th { font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; color: var(--muted); }
+.flex-between { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.6rem; }
+.error-box { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); padding: 0.65rem 1rem; border-radius: var(--radius); font-size: 0.88rem; margin-bottom: 1rem; }
+.hint { color: var(--muted); font-size: 0.85rem; }

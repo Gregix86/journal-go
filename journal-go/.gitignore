@@ -1,0 +1,6 @@
+.env
+/carnet
+static/uploads/*
+!static/uploads/.gitkeep
+backups/*.sql
+backups/*.tar.gz
