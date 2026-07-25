@@ -177,7 +177,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploiement via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.VPS_HOST }}
           port: 2222
