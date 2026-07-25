@@ -66,18 +66,8 @@ jobs:
       - name: Installe Trivy
         uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241 # v0.2.6, epingle par hash (cf. compromission mars 2026)
 
-      - name: Trivy config - detail lisible (debug)
-        run: trivy config . --severity CRITICAL,HIGH --exit-code 0
-
-      - name: Trivy (IaC - Dockerfile / docker-compose mal configures)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: config
-          scan-ref: .
-          format: sarif
-          output: trivy-config.sarif
-          severity: CRITICAL,HIGH
-          exit-code: "1"
+      - name: Genere le SARIF (ne bloque jamais - juste pour l'onglet Security)
+        run: trivy config . --severity CRITICAL,HIGH --format sarif --output trivy-config.sarif --exit-code 0
 
       - name: Publie les resultats Trivy config dans l'onglet Security
         if: always()
@@ -85,6 +75,9 @@ jobs:
         with:
           sarif_file: trivy-config.sarif
           category: trivy-config
+
+      - name: Trivy config (IaC - Dockerfile / docker-compose mal configures)
+        run: trivy config . --severity CRITICAL,HIGH --exit-code 1
 
   # ---------- Build : construit l'image Docker, la pousse, et scan SCA/conteneur ----------
   build-and-push:
