@@ -17,9 +17,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   web:
-    image: ghcr.io/<TON-COMPTE-GITHUB>/<TON-DEPOT>:latest
+    image: ghcr.io/gregix86/journal-go:latest
     restart: unless-stopped
     depends_on:
       db:
