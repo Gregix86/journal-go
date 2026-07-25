@@ -162,6 +162,7 @@ jobs:
         uses: zaproxy/action-baseline@v0.15.0
         with:
           target: "http://localhost:8000/"
+          cmd_options: "-c .zap/rules.tsv"
           fail_action: true
           allow_issue_writing: false
 
@@ -186,3 +187,4 @@ jobs:
             cd ~/journal-go
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
+            
