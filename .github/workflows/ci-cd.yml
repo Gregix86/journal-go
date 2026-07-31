@@ -66,7 +66,7 @@ jobs:
           gitleaks detect --source . --verbose --redact
 
       - name: Installe Trivy
-        uses: aquasecurity/setup-trivy@e07451d2e059ed86c2870430ea286b3a9e0bf241 # v0.2.6, epingle par hash (cf. compromission mars 2026)
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.2.6, epingle par hash (cf. compromission mars 2026)
 
       - name: Genere le SARIF (ne bloque jamais - juste pour l'onglet Security)
         run: trivy config . --severity CRITICAL,HIGH --format sarif --output trivy-config.sarif --exit-code 0
