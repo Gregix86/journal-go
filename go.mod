@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/yuin/goldmark v1.8.4
+	github.com/yuin/goldmark v1.8.5
 	golang.org/x/crypto v0.31.0
 )
 
