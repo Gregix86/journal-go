@@ -5,7 +5,7 @@ go 1.25
 replace golang.org/x/crypto => github.com/golang/crypto v0.31.0
 
 require (
-	github.com/go-chi/chi/v5 v5.3.1
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/sqlc-dev/pqtype v0.3.0
