@@ -1,5 +1,5 @@
 # ---- etape de build ----
-FROM golang:1.25-bookworm AS build
+FROM golang:1.27-bookworm AS build
 
 WORKDIR /src
 
